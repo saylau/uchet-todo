@@ -1,29 +1,78 @@
-version: '2'
+version: '3'
 
 services:
   postgres:
     image: postgres:11.6
-  web:
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./dump:/dump
+    ports:
+      - '5433:5432'
+    environment:
+      - POSTGRES_PASSWORD=uchet-todo
+      - POSTGRES_USER=uchet-todo
+      - POSTGRES_DB=uchet-todo
+
+  rabbitmq:
+    image: rabbitmq:3.8.1-management
+    ports:
+      - '5673:5672'
+      - '15673:15672'
+    environment:
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_USERNAME=guest
+
+  redis:
+    image: redis:latest
+  #    ports:
+  #      - "6380:6379"
+
+  back:
     restart: always
     environment:
       - DJANGO_SECRET_KEY=local
-    image: web
+      - DB_HOST=postgres
+      - DB_USER=uchet-todo
+      - DB_NAME=uchet-todo
+      - RABBIT_PROTOCOL=amqp
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_USER=guest
+      - RABBIT_PASSWORD=guest
+      - RABBIT_PORT=5672
+      - CELERY_REDIS_HOST=redis
+      - CELERY_REDIS_PORT=6379
     build: ./
     command: >
-      bash -c "python wait_for_postgres.py &&
-               ./manage.py migrate &&
-               ./manage.py runserver 0.0.0.0:8000"
+      bash -c "python manage.py migrate --noinput &&
+               python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - ./:/code
+      - ./:/app
     ports:
-      - "8000:8000"
+      - '8000:8000'
     depends_on:
       - postgres
-  documentation:
+      - redis
+      - rabbitmq
+
+  celery:
     restart: always
+    environment:
+      - CONTAINER_TYPE=CELERY
+      - DJANGO_SECRET_KEY=local
+      - DB_HOST=postgres
+      - DB_USER=uchet-todo
+      - DB_NAME=uchet-todo
+      - RABBIT_PROTOCOL=amqp
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_USER=guest
+      - RABBIT_PASSWORD=guest
+      - RABBIT_PORT=5672
     build: ./
-    command: "mkdocs serve"
+    command: >
+      bash -c "./docker-entrypoint.sh"
     volumes:
       - ./:/code
-    ports:
-      - "8001:8001"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq

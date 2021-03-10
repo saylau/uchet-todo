@@ -1,15 +1,33 @@
 FROM python:3.8
 ENV PYTHONUNBUFFERED 1
 
-# Allows docker to cache installed dependencies between builds
-COPY ./requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN apt-get update && apt-get install -y gettext libgettextpo-dev
 
-# Adds our application code to the image
-COPY . code
-WORKDIR code
+COPY ./requirements.txt /
+RUN pip install --upgrade pip && pip install -r /requirements.txt
 
-EXPOSE 8000
+# Set volume for database and static files.
+RUN mkdir -p /static /media
 
-# Run the production server
-CMD newrelic-admin run-program gunicorn --bind 0.0.0.0:$PORT --access-logfile - apps.wsgi:application
+# Set docker-entrypoint
+COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Set env variables
+ENV DJANGO_SETTINGS_MODULE=config.settings.development
+ENV PORT 8000
+ENV STATIC_ROOT /static
+ENV MEDIA_ROOT /media
+
+WORKDIR /app
+
+# Copy source code
+COPY . /app
+
+# Collect static
+RUN python manage.py collectstatic --noinput --clear
+
+# Compile translations
+RUN python manage.py compilemessages
+
+CMD ["/docker-entrypoint.sh"]
