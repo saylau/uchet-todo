@@ -31,9 +31,11 @@ services:
     restart: always
     environment:
       - DJANGO_SECRET_KEY=local
+      - DJANGO_CONFIGURATION=Local
       - DB_HOST=postgres
       - DB_USER=uchet-todo
       - DB_NAME=uchet-todo
+      - DB_PASSWORD=uchet-todo
       - RABBIT_PROTOCOL=amqp
       - RABBIT_HOST=rabbitmq
       - RABBIT_USER=guest
@@ -59,17 +61,19 @@ services:
     environment:
       - CONTAINER_TYPE=CELERY
       - DJANGO_SECRET_KEY=local
+      - DJANGO_CONFIGURATION=Local
       - DB_HOST=postgres
       - DB_USER=uchet-todo
       - DB_NAME=uchet-todo
+      - DB_PASSWORD=uchet-todo
       - RABBIT_PROTOCOL=amqp
       - RABBIT_HOST=rabbitmq
       - RABBIT_USER=guest
       - RABBIT_PASSWORD=guest
       - RABBIT_PORT=5672
     build: ./
-    command: >
-      bash -c "./docker-entrypoint.sh"
+#    command: >
+#      bash -c "./docker-entrypoint.sh"
     volumes:
       - ./:/code
     depends_on:

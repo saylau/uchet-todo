@@ -14,7 +14,7 @@ COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Set env variables
-ENV DJANGO_SETTINGS_MODULE=config.settings.development
+ENV DJANGO_SETTINGS_MODULE=config.settings.local
 ENV PORT 8000
 ENV STATIC_ROOT /static
 ENV MEDIA_ROOT /media
@@ -28,6 +28,6 @@ COPY . /app
 RUN python manage.py collectstatic --noinput --clear
 
 # Compile translations
-RUN python manage.py compilemessages
+#RUN python manage.py compilemessages
 
 CMD ["/docker-entrypoint.sh"]

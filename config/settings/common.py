@@ -21,7 +21,7 @@ class Common(Configuration):
         'rest_framework',            # utilities for rest apis
         'rest_framework.authtoken',  # token authentication
         'django_filters',            # for filtering rest endpoints
-
+        'drf_yasg',
         # Your apps
         'apps.users',
         'apps.tasks'
@@ -45,6 +45,11 @@ class Common(Configuration):
 
     # Email
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.yandex.ru")
+    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+    EMAIL_PORT = os.getenv("EMAIL_PORT", 587)
+    EMAIL_USE_TLS = True
 
     ADMINS = (
         ('Author', 'temirkhan.saylau@gmail.com'),
@@ -203,3 +208,20 @@ class Common(Configuration):
             'rest_framework.authentication.TokenAuthentication',
         )
     }
+    SWAGGER_SETTINGS = {
+        "USE_SESSION_AUTH": False,
+        "SECURITY_DEFINITIONS": {
+            "api_key": {"type": "apiKey", "name": "Authorization", "in": "header"},
+        },
+        "DEEP_LINKING": True,
+    }
+    # Celery settings
+    CELERY_BROKER_URL = "{protocol}://{user}:{pwd}@{host}:{port}/{vhost}".format(
+        protocol=os.getenv("RABBIT_PROTOCOL", "pyamqp"),
+        user=os.getenv("RABBIT_USER", "guest"),
+        pwd=os.getenv("RABBIT_PASSWORD", "guest"),
+        host=os.getenv("RABBIT_HOST", "localhost"),
+        port=os.getenv("RABBIT_PORT", "5672"),
+        vhost=os.getenv("RABBIT_VHOST", "/"),
+    )
+
