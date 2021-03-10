@@ -1,11 +1,12 @@
-import uuid
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from django.dispatch import receiver
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.core.mail import send_mail
 from django.db.models.signals import post_save
 from rest_framework.authtoken.models import Token
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -16,7 +17,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     Username and password are required. Other fields are optional.
     """
 
-    email = models.EmailField(_('email address'), blank=True)
+    email = models.EmailField(_('email address'), unique=True)
     is_staff = models.BooleanField(
         _('staff status'),
         default=False,
@@ -36,12 +37,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['email']
 
     class Meta:
         verbose_name = _('user')
         verbose_name_plural = _('users')
-        abstract = True
 
     def clean(self):
         super().clean()
